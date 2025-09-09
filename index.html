@@ -1,47 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- This is the standard document type declaration for an HTML5 page. -->
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+    <!-- The <head> section contains metadata about our webpage, and links to external files.
+         Nothing in here is directly visible on the page itself. -->
     <title>Cognitive World</title>
 
-    <!--A-Frame Library-->
+    <!-- TUTORIAL: This is a special script that must be placed *before* A-Frame is loaded.
+         It tells the underlying 3D engine (Three.js) to use its modern, physically correct
+         lighting and color system. This prevents our background images from looking too dark. -->
+    <script>
+      window.THREE = { ColorManagement: { enabled: true } };
+    </script>
+
+    <!-- This is the most important script. It downloads and includes the A-Frame library,
+         which gives our browser the "vocabulary" (the <a-scene>, <a-sky> tags, etc.)
+         to understand and build a 3D world. -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
-    <!--User Interface Styling-->
+    <!-- The <style> section contains our CSS (Cascading Style Sheets).
+         This is where we define the look and layout of our 2D user interface (UI) elements. -->
     <style>
+      /* A basic "reset" to make sure our page fills the entire browser window
+           without any default margins or scrollbars. */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      /* This is the main container for our 2D UI. */
       .ui-overlay {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
-        text-align: center;
-        color: white;
-        font-family: sans-serif;
+        position: absolute; /* This makes the UI "float" on top of the 3D scene. */
+        bottom: 20px; /* We position it 20 pixels from the bottom of the screen. */
+        left: 50%; /* We start it 50% from the left edge... */
+        transform: translateX(
+          -50%
+        ); /* ...and then shift it left by half its own width to center it perfectly. */
+        z-index: 10; /* A high z-index ensures it appears on top of other elements. */
+        text-align: center; /* Center the text inside the container. */
+        color: white; /* Set the default text color to white. */
+        font-family: sans-serif; /* Use a clean, standard font. */
       }
+
+      /* Styling for the box that shows the application's current status. */
       .status-box {
-        background-color: rgba(0, 0, 0, 0.6);
-        padding: 12px 24px;
-        border-radius: 12px;
-        margin-bottom: 15px;
+        background-color: rgba(0, 0, 0, 0.6); /* Black with 60% transparency. */
+        padding: 12px 24px; /* Add some internal spacing. */
+        border-radius: 12px; /* Give it rounded corners. */
+        margin-bottom: 15px; /* Add some space below it, pushing the button down. */
       }
+
+      /* Styling for our main control button. */
       .control-button {
-        background-color: #4a4e69;
+        background-color: #4a4e69; /* A nice muted purple color. */
         color: white;
         padding: 15px 30px;
-        border-radius: 50px;
-        border: none;
+        border-radius: 50px; /* Makes the button a "pill" shape. */
+        border: none; /* Remove the default button border. */
         font-size: 1.2em;
-        cursor: pointer;
+        cursor: pointer; /* Change the mouse cursor to a pointer on hover. */
+        /* Add smooth transitions for a polished feel when hovering or disabling. */
+        transition: background-color 0.3s, opacity 0.3s;
+      }
+
+      /* A style for when the button is disabled (e.g., while the app is listening). */
+      .control-button:disabled {
+        opacity: 0.5; /* Make it semi-transparent. */
+        cursor: not-allowed; /* Show a "not allowed" cursor. */
       }
     </style>
   </head>
   <body>
-    <!--Define the 3D Scene-->
-    <a-scene renderer="colorManagement: true">
+    <!-- The <body> contains all the content of our page that the user can see. -->
+
+    <!-- This is the A-Frame scene tag. It is the container for our entire 3D world. -->
+    <a-scene>
+      <!-- The <a-assets> tag is A-Frame's system for pre-loading media like images.
+             This ensures that our background is ready to go before we try to use it, preventing errors. -->
       <a-assets timeout="10000">
+        <!-- This image will be our new background. We give it an 'id' so our JavaScript can find it.
+                 'crossorigin="anonymous"' is important for allowing the browser to load images from other websites. -->
         <img
           id="sky-asset"
           src="https://raw.githubusercontent.com/aframevr/aframe/master/examples/boilerplate/panorama/puydesancy.jpg"
@@ -49,10 +89,16 @@
         />
       </a-assets>
 
+      <!-- We add a simple ambient light to our scene. This light shines on everything equally
+             from all directions, ensuring our objects and textures are visible. -->
       <a-light type="ambient" color="#FFF" intensity="1.0"></a-light>
+
+      <!-- The <a-sky> is a giant sphere that surrounds our entire scene. We give it an 'id'
+             so our JavaScript can control it. It starts with a dark blue color. -->
       <a-sky id="sky-background" color="#101015"></a-sky>
 
-      <!-- We're updating the default text to be a title and a prompt for the user. -->
+      <!-- The <a-text> component creates text that floats in the 3D space. We give them IDs
+             so our JavaScript can update them with status messages. -->
       <a-text
         id="main-text"
         value="Cognitive World"
@@ -61,100 +107,175 @@
       ></a-text>
       <a-text
         id="sub-text"
-        value="Click the button to begin."
+        value="Click the button and say 'begin'."
         position="-2.5 1.8 -5"
         color="#CCCCCC"
       ></a-text>
 
+      <!-- The <a-camera> is our eyes in the world. It is our point of view. -->
       <a-camera></a-camera>
     </a-scene>
 
-    <!--Button and Status Box-->
+    <!-- This is the HTML for our 2D UI that sits on top of the 3D world. -->
     <div class="ui-overlay">
-      <div id="status-display" class="status-box">Status: Ready to Test</div>
-      <!-- The button now calls startListening() and has new text. -->
+      <div id="status-display" class="status-box">Status: Ready</div>
       <button id="mic-button" class="control-button" onclick="startListening()">
         Start Listening
       </button>
     </div>
 
-    <!--Interactive JavaScript-->
+    <!-- This final <script> tag is where we put all our JavaScript code that controls the page. -->
     <script>
+      // --- [ Section 1: Scene Control ] ---
+      /**
+       * This function is our dedicated "controller" for the 3D world's sky.
+       * Its only job is to find the sky element and change its appearance.
+       * @param {string} assetId - The ID of the pre-loaded image asset from <a-assets> (e.g., "#sky-asset").
+       */
       function changeSky(assetId) {
         const skyElement = document.querySelector("#sky-background");
         if (skyElement) {
+          // We are specifically targeting the 'material' component's 'src' property.
           skyElement.setAttribute("material", "src", assetId);
+          // We also set the material's color to white. This removes any tint and allows
+          // the image to appear at its full, natural brightness.
           skyElement.setAttribute("material", "color", "#FFFFFF");
         }
       }
 
-      // --- [ Section 2: Voice Recognition ] ---
+      // --- [ Section 2: UI Element References ] ---
+      // To make our code cleaner and faster, we get references to all our UI elements
+      // once at the start and store them in constants.
+      const statusDisplay = document.querySelector("#status-display");
+      const micButton = document.querySelector("#mic-button");
+      const mainText = document.querySelector("#main-text");
+      const subText = document.querySelector("#sub-text");
 
-      // We check if the browser supports the Web Speech API. It's called 'webkitSpeechRecognition' in Chrome and Edge.
+      // --- [ Section 3: The Frontend-to-Backend Bridge ] ---
+      /**
+       * This function sends the transcribed text to our Python backend server.
+       * The 'async' keyword means this function can perform actions (like waiting for a network request)
+       * without freezing the entire webpage.
+       * @param {string} text - The text transcribed from the user's voice.
+       */
+      async function sendBackendCommand(text) {
+        console.log(`Sending command to backend: "${text}"`);
+        statusDisplay.textContent = `Sending: "${text}"`;
+        mainText.setAttribute("value", "Sending to AI Director...");
+
+        // A try...catch block is essential for handling network errors gracefully.
+        try {
+          // 'fetch' is the browser's built-in tool for making web requests.
+          // The 'await' keyword tells the function to pause here and wait for the request to complete.
+          const response = await fetch(
+            "http://127.0.0.1:8000/process-command",
+            {
+              method: "POST", // We use POST because we are SENDING data to the server.
+              headers: {
+                // This header tells the server that the data we are sending is in JSON format.
+                "Content-Type": "application/json",
+              },
+              // This is the actual data we're sending. We create a JavaScript object
+              // that matches the structure our Python server expects: { "text": "..." }.
+              // JSON.stringify() converts this object into a string so it can be sent over the network.
+              body: JSON.stringify({ text: text }),
+            }
+          );
+
+          // After the server responds, we check if the request was successful.
+          if (!response.ok) {
+            // If not, we create an error to be handled by our 'catch' block below.
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          // If the request was successful, we 'await' the response data,
+          // telling our code to parse it from a string back into a JSON object.
+          const data = await response.json();
+          console.log("Received response from backend:", data);
+
+          // Now we can update our UI to show the user that the backend has responded.
+          statusDisplay.textContent = `Backend replied: "${data.status}"`;
+          mainText.setAttribute("value", "Response Received!");
+
+          // This is where we will eventually put the AI's instructions. For now,
+          // we'll keep our simple test logic here. If the command was "begin",
+          // we tell our scene controller to change the sky.
+          if (text.toLowerCase() === "begin") {
+            changeSky("#sky-asset");
+          }
+        } catch (error) {
+          // If anything went wrong in our 'try' block (e.g., the server is offline),
+          // the code jumps here, and we can show a helpful error message to the user.
+          console.error("Could not send command to backend:", error);
+          statusDisplay.textContent = "Error: Could not connect to backend.";
+          mainText.setAttribute("value", "Connection Error");
+        }
+      }
+
+      // --- [ Section 4: Voice Recognition Setup ] ---
+      // This line checks if the browser supports the Web Speech API. 'webkitSpeechRecognition' is for Chrome/Safari.
       const SpeechRecognition =
         window.SpeechRecognition || window.webkitSpeechRecognition;
-
-      // We'll create a variable to hold our recognition "engine".
-      let recognition;
+      let recognition; // We'll store our recognition "engine" here.
 
       // We only proceed if the browser actually supports this feature.
       if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
+        recognition = new SpeechRecognition(); // Create a new recognition instance.
 
-        // These settings configure the recognition engine.
-        recognition.continuous = false; // We want it to stop after we finish speaking.
-        recognition.lang = "en-US"; // Set the language.
-        recognition.interimResults = false; // We only want the final, confident result.
+        // --- Configure the recognition engine ---
+        recognition.continuous = false; // Stop listening after the user finishes speaking.
+        recognition.lang = "en-US"; // Set the language to US English.
+        recognition.interimResults = false; // We only want the final, most confident transcript.
 
-        // This event fires when the recognition engine has a final result.
+        // --- Define what happens on different events ---
+
+        // onstart: Fires when the microphone is activated.
+        recognition.onstart = function () {
+          statusDisplay.textContent = "Status: Listening...";
+          micButton.textContent = "Listening...";
+          micButton.disabled = true; // Disable the button to prevent multiple clicks.
+        };
+
+        // onresult: Fires when the speech service has a final result.
         recognition.onresult = function (event) {
-          // We get the spoken text from the event.
+          // The transcribed text is located inside the event object.
           const transcript = event.results[0][0].transcript.trim();
 
-          // For now, we'll just log it to the console and update our 3D text.
-          console.log("I heard you say:", transcript);
-          document.querySelector(
-            "#status-display"
-          ).textContent = `Heard: "${transcript}"`;
-          document
-            .querySelector("#main-text")
-            .setAttribute("value", "Processing command...");
-
-          // --- THIS IS THE CRITICAL CONNECTION ---
-          // We will now check if the user said our magic word, "begin".
-          if (transcript.toLowerCase() === "begin") {
-            document
-              .querySelector("#main-text")
-              .setAttribute("value", "Command recognized!");
-            // If they did, we call our trusted changeSky function!
-            changeSky("#sky-asset");
-          } else {
-            document
-              .querySelector("#main-text")
-              .setAttribute("value", "Command not recognized.");
-          }
+          // Instead of having lots of logic here, we now have one clean job:
+          // take the transcribed text and pass it over to our "bridge" function.
+          sendBackendCommand(transcript);
         };
 
-        // This event fires if there's an error.
+        // onend: Fires when the recognition service stops, either successfully or after an error.
+        recognition.onend = function () {
+          // We reset the button so the user can speak another command.
+          micButton.textContent = "Start Listening";
+          micButton.disabled = false;
+        };
+
+        // onerror: Fires if there's any kind of error (e.g., no speech detected, or permissions issue).
         recognition.onerror = function (event) {
           console.error("Speech recognition error:", event.error);
-          document.querySelector(
-            "#status-display"
-          ).textContent = `Error: ${event.error}`;
+          statusDisplay.textContent = `Error: ${event.error}`;
         };
       } else {
-        // If the browser doesn't support the API, we'll show an error.
-        console.error("Speech Recognition not supported in this browser.");
-        document.querySelector("#status-display").textContent =
-          "Error: Voice commands not supported here.";
+        // If the browser doesn't support the API, we show an error in the UI.
+        statusDisplay.textContent = "Error: Voice commands not supported here.";
+        micButton.disabled = true;
       }
 
-      // This is the new function that our button will call.
+      /**
+       * This function is called by our button's onclick event.
+       * Its only job is to start the voice recognition process.
+       */
       function startListening() {
         if (recognition) {
-          document.querySelector("#status-display").textContent =
-            "Status: Listening...";
-          recognition.start(); // This command activates the microphone.
+          try {
+            recognition.start(); // This command activates the microphone.
+          } catch (e) {
+            // This catch helps prevent an error if the button is clicked multiple times quickly.
+            console.error("Could not start recognition:", e);
+          }
         }
       }
     </script>

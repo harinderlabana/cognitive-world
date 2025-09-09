@@ -50,8 +50,21 @@
       </a-assets>
 
       <a-light type="ambient" color="#FFF" intensity="1.0"></a-light>
-
       <a-sky id="sky-background" color="#101015"></a-sky>
+
+      <!-- We're updating the default text to be a title and a prompt for the user. -->
+      <a-text
+        id="main-text"
+        value="Cognitive World"
+        position="-2.5 2.2 -5"
+        color="#FFFFFF"
+      ></a-text>
+      <a-text
+        id="sub-text"
+        value="Click the button to begin."
+        position="-2.5 1.8 -5"
+        color="#CCCCCC"
+      ></a-text>
 
       <a-camera></a-camera>
     </a-scene>
@@ -59,28 +72,90 @@
     <!--Button and Status Box-->
     <div class="ui-overlay">
       <div id="status-display" class="status-box">Status: Ready to Test</div>
-      <button id="test-button" class="control-button" onclick="runTest()">
-        Run Scenery Test
+      <!-- The button now calls startListening() and has new text. -->
+      <button id="mic-button" class="control-button" onclick="startListening()">
+        Start Listening
       </button>
     </div>
 
     <!--Interactive JavaScript-->
     <script>
-      // This function finds the sky and changes its background image.
       function changeSky(assetId) {
         const skyElement = document.querySelector("#sky-background");
         if (skyElement) {
           skyElement.setAttribute("material", "src", assetId);
-          // This line removes the dark tint, making the image bright.
           skyElement.setAttribute("material", "color", "#FFFFFF");
         }
       }
 
-      // This function is called when the button is clicked.
-      function runTest() {
+      // --- [ Section 2: Voice Recognition ] ---
+
+      // We check if the browser supports the Web Speech API. It's called 'webkitSpeechRecognition' in Chrome and Edge.
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      // We'll create a variable to hold our recognition "engine".
+      let recognition;
+
+      // We only proceed if the browser actually supports this feature.
+      if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+
+        // These settings configure the recognition engine.
+        recognition.continuous = false; // We want it to stop after we finish speaking.
+        recognition.lang = "en-US"; // Set the language.
+        recognition.interimResults = false; // We only want the final, confident result.
+
+        // This event fires when the recognition engine has a final result.
+        recognition.onresult = function (event) {
+          // We get the spoken text from the event.
+          const transcript = event.results[0][0].transcript.trim();
+
+          // For now, we'll just log it to the console and update our 3D text.
+          console.log("I heard you say:", transcript);
+          document.querySelector(
+            "#status-display"
+          ).textContent = `Heard: "${transcript}"`;
+          document
+            .querySelector("#main-text")
+            .setAttribute("value", "Processing command...");
+
+          // --- THIS IS THE CRITICAL CONNECTION ---
+          // We will now check if the user said our magic word, "begin".
+          if (transcript.toLowerCase() === "begin") {
+            document
+              .querySelector("#main-text")
+              .setAttribute("value", "Command recognized!");
+            // If they did, we call our trusted changeSky function!
+            changeSky("#sky-asset");
+          } else {
+            document
+              .querySelector("#main-text")
+              .setAttribute("value", "Command not recognized.");
+          }
+        };
+
+        // This event fires if there's an error.
+        recognition.onerror = function (event) {
+          console.error("Speech recognition error:", event.error);
+          document.querySelector(
+            "#status-display"
+          ).textContent = `Error: ${event.error}`;
+        };
+      } else {
+        // If the browser doesn't support the API, we'll show an error.
+        console.error("Speech Recognition not supported in this browser.");
         document.querySelector("#status-display").textContent =
-          "Status: Running test...";
-        changeSky("#sky-asset"); // We tell our controller to use the pre-loaded image.
+          "Error: Voice commands not supported here.";
+      }
+
+      // This is the new function that our button will call.
+      function startListening() {
+        if (recognition) {
+          document.querySelector("#status-display").textContent =
+            "Status: Listening...";
+          recognition.start(); // This command activates the microphone.
+        }
       }
     </script>
   </body>

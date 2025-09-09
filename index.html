@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Cognitive World</title>
+
+    <!--A-Frame Library-->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+    <!--User Interface Styling-->
+    <style>
+      .ui-overlay {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        text-align: center;
+        color: white;
+        font-family: sans-serif;
+      }
+      .status-box {
+        background-color: rgba(0, 0, 0, 0.6);
+        padding: 12px 24px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+      }
+      .control-button {
+        background-color: #4a4e69;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 50px;
+        border: none;
+        font-size: 1.2em;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!--Define the 3D Scene-->
+    <a-scene renderer="colorManagement: true">
+      <a-assets timeout="10000">
+        <img
+          id="sky-asset"
+          src="https://raw.githubusercontent.com/aframevr/aframe/master/examples/boilerplate/panorama/puydesancy.jpg"
+          crossorigin="anonymous"
+        />
+      </a-assets>
+
+      <a-light type="ambient" color="#FFF" intensity="1.0"></a-light>
+
+      <a-sky id="sky-background" color="#101015"></a-sky>
+
+      <a-camera></a-camera>
+    </a-scene>
+
+    <!--Button and Status Box-->
+    <div class="ui-overlay">
+      <div id="status-display" class="status-box">Status: Ready to Test</div>
+      <button id="test-button" class="control-button" onclick="runTest()">
+        Run Scenery Test
+      </button>
+    </div>
+
+    <!--Interactive JavaScript-->
+    <script>
+      // This function finds the sky and changes its background image.
+      function changeSky(assetId) {
+        const skyElement = document.querySelector("#sky-background");
+        if (skyElement) {
+          skyElement.setAttribute("material", "src", assetId);
+          // This line removes the dark tint, making the image bright.
+          skyElement.setAttribute("material", "color", "#FFFFFF");
+        }
+      }
+
+      // This function is called when the button is clicked.
+      function runTest() {
+        document.querySelector("#status-display").textContent =
+          "Status: Running test...";
+        changeSky("#sky-asset"); // We tell our controller to use the pre-loaded image.
+      }
+    </script>
+  </body>
+</html>
